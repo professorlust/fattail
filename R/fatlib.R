@@ -6,8 +6,7 @@ require(KernSmooth)
 ## functions for GPD inference
 
 # neg log posterior
-nljoint <- function(v, xx, p=NULL){
-    if(is.null(p)) p <- c(10,10,0,0)
+nljoint <- function(v, xx, p=c(10,10,0,0)){
     if(any(v <= 0)) return(1e20)
     if(v[1]>=1) return(1e20)
     ll <- -(length(xx)+1-p[3])*log(v[2]) - (1/v[1]+1)*sum(log(1+v[1]*xx/v[2])) +
@@ -15,40 +14,10 @@ nljoint <- function(v, xx, p=NULL){
     return(-ll)
 }
 
-# profile alpha map and resulting neg log post
-alpha <- function(tg, xx) sapply(tg, 
-	function(t) (length(xx)+1)/sum(log(1+t*xx)))
-nlprof <- function(t, xx){
-    a <- alpha(t, xx)
-    -log(t*a) + 1/a
-}
-
-# gradient of the profile neg log post
-gp <- function(t, xx) 
-	(length(xx)+1)/t - (alpha(t,xx)+1)*sum(xx/(1+t*xx))
-
-# wrap it all together
-gpdMAP <- function(xx, p=NULL){	
-    if(is.null(p)){
-        tauhat <- try(uniroot(
-                function(t) gp(t, xx=xx),
-                 c(1e-10,.1), tol=1e-8)$root,
-                silent=TRUE)
-        if(class(tauhat)!="try-error"){
-            ahat <- alpha(tauhat, xx=xx)
-            if(ahat>=1) return(list(
-                tau=tauhat, alpha=ahat, 
-                xi=1/ahat, sigma=1/(tauhat*ahat),
-                lambda=1/(tauhat*(ahat-1))))
-        }
-    }
-    if(is.null(p)) p <- c(10,10,0,0)
-    theta <- optim(c(.5,1000), 
-            function(v) nljoint(v, xx=xx, p=p), control=list(reltol=1e-12))$par
-    xihat <- theta[1]
-    sighat <- theta[2]
-    ahat <- 1/xihat
-    lamhat <- sighat/(1-xihat)
+# MAP estimator
+gpdMAP <- function(xx, p=c(10,10,0,0)){	
+    theta <- optim(c(.5,mean(xx)*2), function(v) nljoint(v, xx=xx, p=p),
+     control=list(reltol=1e-12), method="BFGS")$par
 	return( 
 		list(tau=theta[1]/theta[2],alpha=1/theta[1],
             xi=theta[1],sigma=theta[2], 
@@ -56,8 +25,7 @@ gpdMAP <- function(xx, p=NULL){
 }
 
 # laplace variance approximation
-gpdLV <- function(xx, mapfit, p=NULL){
-    if(is.null(p)) p <- c(10,10,0,0)
+gpdLV <- function(xx, mapfit, p=c(10,10,0,0)){
     q = xx*mapfit$xi/(mapfit$lam*(1-mapfit$xi) + xx*mapfit$xi)
     v = -mapfit$lam^2/(length(xx) - p[3] + 1 + (1/mapfit$xi + 1)*sum(q^2-2*q))
     return(v)
