@@ -1,10 +1,9 @@
 source("R/fatlib.R")
 library(parallel)
-cl <- makeCluster(4,outfile="")
-ugrid <- c(1,10,20,30,40,50,60,70,80,90,
-	100,200,300,400,500,600,700,800,900,
-	1000,2000,5000,10000,50000,100000,Inf)
-xigrid <- c(.2,.3,.4,.5,.6,.7,.8,.9)
+cl <- makeCluster(3,outfile="")
+ugrid <- c(0,1,10,20,30,40,50,60,70,80,90,
+	100,200,300,400,500,600,700,800,900,1000)
+xigrid <- c(.25,.5,.75)
 clusterExport(cl, "ugrid")
 
 getR <- function(xi, n=100000){
