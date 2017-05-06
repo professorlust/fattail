@@ -117,7 +117,7 @@ muAndVar <- function(v){
     list(n=n, mu=y/n, var=y2/n - (y/n)^2)
 }
 
-## put things together
+## put things together for the tail
 tailInference <-  function(v, B=1000, p=c(10,10,0,0), plotit=FALSE){
 
     if(length(v)<2)
@@ -174,11 +174,12 @@ tailInference <-  function(v, B=1000, p=c(10,10,0,0), plotit=FALSE){
         lamMean=lamMean, 
         lamSD=lamSD,
         lamLaplaceSD=lamLaplaceSD,
+        lamSamp=post$lam,
         pmove=mean(post$pmove),
         xi=map$xi, sigma=map$sigma))
 }
 
-
+# and for the full distribution
 meanInference <- function(z, u, 
         zstats=NULL, tail=NULL, 
         B=1000, p=c(10,10,0,0), plotit=FALSE)
@@ -222,11 +223,13 @@ meanInference <- function(z, u,
             ((m+n)*(m+n+1))  
     SDmuLaplace <- sqrt(VmuLaplace)
 
+
     return(list(
         n=n, m=m, 
-        xi=tail$xi, sigma=tail$sigma,
         Emu=Emu, SDmu=SDmu, 
-        EmuLaplace=EmuLaplace, SDmuLaplace=SDmuLaplace))
+        EmuLaplace=EmuLaplace, SDmuLaplace=SDmuLaplace,
+        xi=tail$xi, sigma=tail$sigma, 
+        lamSamp=tail$lamSamp))
 }
 
 
